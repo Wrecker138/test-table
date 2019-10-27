@@ -39,7 +39,9 @@ let app = new Vue({
 	el: '#app',
 	data:{
 		table:[],
+		infoData:{
 
+		}
 	},
 	mounted() {
 		if (localStorage.getItem('table')) {
@@ -78,14 +80,45 @@ let app = new Vue({
 			this.saveOurTable();
 		},
 		validateElement(value) {
-			if (value === '' ) return '-'
+			if (value === '' || value === null || value === undefined) return '-'
 			else return value
 		},
 
 		saveOurTable() {
 			const parsedTable = JSON.stringify(this.table);
 			localStorage.setItem('table', parsedTable);
+		},
+		loadInfo() {
+			axios
+				.post('https://suggestions.dadata.ru/suggestions/api/4_1/rs/findById/party',{ "query": "7707083893" },{
+					headers:{
+						'Content-Type': 'application/json; charset=UTF-8',
+						'Accept': 'application/json',
+    					'Authorization': 'Token e42d709944d8cd9282bc1d2cddb28215aa00f865',
+    					'X-Secret': '5c93019dc207a5832f05d93ae1c3cb6d2732423a'
+					},
+				})
+				.then(response => {
+					this.infoData = response.data.suggestions
+					this.renderInfo();
+					this.saveOurTable();
+				})
+				.catch(error => {
+					console.log(error.response)
+				})
+		},
+
+		renderInfo() {
+			let self = this;
+			for( let item in this.infoData) {
+				self.table.push({
+					name: self.validateElement(self.infoData[item].data.name.short),
+					address: self.validateElement(self.infoData[item].data.address.value),
+					ogrn: self.validateElement(self.infoData[item].data.ogrn),
+					inn: self.validateElement(self.infoData[item].data.inn),
+					date: self.validateElement(self.infoData[item].data.ogrn_date),
+				})
+			}
 		}
 	},
-
 })
